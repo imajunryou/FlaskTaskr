@@ -5,6 +5,7 @@ from functools import wraps
 
 from flask import Flask, flash, redirect, render_template, \
     request, session, url_for, g
+from forms import AddTaskForm
 
 # config
 app = Flask(__name__)
@@ -24,7 +25,7 @@ def login_required(test):
         else:
             flash("You need to login first.")
             return redirect(url_for("login"))
-        return wrap
+    return wrap
 
 
 # route handlers
@@ -52,12 +53,21 @@ def login():
 @app.route("/tasks/")
 @login_required
 def tasks():
-    g.db() = connect_db()
+    g.db = connect_db()
     cursor = g.db.execute(
         "select name, due_date, priority, task_id from tasks where status=1"
     )
 
     open_tasks = [
+        dict(name=row[0], due_date=row[1], priority=row[2],
+             task_id=row[3]) for row in cursor.fetchall()
+    ]
+
+    cursor = g.db.execute("select name, due_date, priority, task_id \
+                          from tasks where status = 0"
+                          )
+
+    closed_tasks = [
         dict(name=row[0], due_date=row[1], priority=row[2],
              task_id=row[3]) for row in cursor.fetchall()
     ]
@@ -75,7 +85,7 @@ def tasks():
 @app.route("/add/", methods=["POST"])
 @login_required
 def new_task():
-    g.db = db_connect()
+    g.db = connect_db()
     name = request.form["name"]
     date = request.form["due_date"]
     priority = request.form["priority"]
